@@ -1,0 +1,74 @@
+dimensions:
+  - id: D01_data_model
+    name: 数据模型与状态 (Data Model & State)
+    probes:
+      - 实体的唯一性约束在哪里定义？
+      - 是否存在软删除与硬删除混用？
+      - 状态机的合法转移是显式还是隐式？
+      - 是否有缺失的索引或外键约束风险？
+  - id: D02_boundaries
+    name: 模块边界与接口契约 (Boundaries & API Contracts)
+    probes:
+      - 这个改动会跨越几个 Bounded Context（限界上下文）？
+      - 上下游的 API 版本策略是什么？是否破坏向后兼容性？
+      - 强耦合依赖项有哪些？有无解耦或引入事件驱动的必要？
+  - id: D03_error_handling
+    name: 错误处理与失败模式 (Error Handling & Failures)
+    probes:
+      - 现有代码对"失败"是抛异常、返回错误码，还是 Result/Either 类型？
+      - 是否有全局错误拦截、降级或兜底机制？
+      - 失败时的用户提示文案在哪里配置？
+  - id: D04_concurrency
+    name: 并发、幂等与时序 (Concurrency & Idempotency)
+    probes:
+      - 该路径是否可能被并发重放？防重/幂等键设在哪里？
+      - 是否存在竞态窗口（Race Conditions）？需要引入分布式锁还是数据库锁？
+      - 异步队列或后台任务的消费时序是否有强要求？
+  - id: D05_performance
+    name: 性能与容量限制 (Performance & Capacity)
+    probes:
+      - 该改动的正常/极端调用频次是多少？
+      - 是否存在数据库 N+1 查询、大对象反序列化或内存泄露风险？
+      - 是否需要缓存？缓存穿透、击穿与雪崩的防护如何？
+  - id: D06_security_privacy
+    name: 安全与隐私保护 (Security & Privacy)
+    probes:
+      - 用户输入是否可信？在哪个边界进行校验与净化？
+      - 是否触碰 PII（个人敏感信息）？落库或日志是否需要加密与脱敏？
+      - 权限控制是基于角色(RBAC)还是属性(ABAC)？越权漏洞风险如何？
+  - id: D07_observability
+    name: 可观测性与度量 (Observability & Metrics)
+    probes:
+      - 日志记录规范（结构化日志 / 级别定义 / Trace ID 传递）是否完备？
+      - 核心业务指标（如交易、转化率）是否有 Metric 埋点？
+      - 异常告警的阈值、接收渠道以及响应预案是什么？
+  - id: D08_testing
+    name: 测试策略与覆盖率 (Testing Strategy)
+    probes:
+      - 现有测试金字塔的分层（单元测试、集成测试、E2E）是如何规划的？
+      - 测试环境的数据准备和清理机制是什么？
+      - 是否存在外部依赖服务的 Mock 规范？有无契约测试（Contract Testing）？
+  - id: D09_dependencies
+    name: 依赖与第三方许可 (Dependencies & Licenses)
+    probes:
+      - 该改动是否引入了新的开源依赖？其 License 是否兼容且安全？
+      - 第三方服务（如 SDK、SaaS 接口）的 SLA（可用性承诺）和限流规则是什么？
+      - 有无锁版本（lockfile）冲突或老旧依赖漏洞？
+  - id: D10_ops_deploy
+    name: 部署、发布与回滚 (Ops, Deploy & Rollback)
+    probes:
+      - 灰度发布/金丝雀发布策略是什么？如何验证局部流量？
+      - 出现异常时的回滚代价多大？是否涉及不可逆的数据迁移或 schema 变更？
+      - 是否有功能开关（Feature Toggle）以便随时在线关闭新特性？
+  - id: D11_conventions
+    name: 隐性规范与代码风格 (Conventions & Idioms)
+    probes:
+      - 命名、目录结构、错误文案在当前模块的既有约定是什么？
+      - 有无特殊的 Lint 规则或 IDE Formatter 规则需要遵守？
+      - 是否有项目中约定俗成的设计模式或规避反模式的暗线？
+  - id: D12_historical
+    name: 历史决策与技术债 (Historical Context & Debt)
+    probes:
+      - 该文件/模块近 20 个 commit 提到过什么顽疾或未解问题？
+      - 是否有相关的 issue、RFC、技术方案设计书或 Postmortem（故障复盘记录）？
+      - 当前改动是否会在已知技术债上重叠，让以后更难重构？
