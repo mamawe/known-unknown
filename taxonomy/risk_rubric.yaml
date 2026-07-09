@@ -1,0 +1,130 @@
+## 风险打分规则 (Risk Scoring Rubric)
+# 三个维度分别独立打分，最终综合分 score 用于排序和颜色标注
+#
+# score = impact_weight × likelihood_weight × reversibility_multiplier
+#
+# 颜色阈值：
+#   score >= 8  → 🔴 critical（卡单，必须在进入 plan 阶段前回答）
+#   score >= 5  → 🟠 high    （强烈建议 plan 前解决）
+#   score >= 3  → 🟡 medium  （允许在实现阶段补充，但需记录）
+#   score < 3   → 🟢 low     （低优先级，可在 tech debt backlog 中跟进）
+
+dimensions:
+  impact:
+    description: 若该未知项的猜测方向错误，对系统或用户的最坏影响
+    levels:
+      critical:
+        weight: 4
+        description: 数据损坏、严重安全漏洞、全量用户不可用、不可恢复
+      high:
+        weight: 3
+        description: 核心功能故障、大范围降级、显著数据丢失
+      medium:
+        weight: 2
+        description: 局部功能异常、用户体验明显受损、边缘数据错误
+      low:
+        weight: 1
+        description: 轻微 UI 瑕疵、日志噪音、可快速修复的偏差
+
+  likelihood:
+    description: 在当前代码库或需求上下文下，该未知项实际爆发的概率
+    levels:
+      high:
+        weight: 3
+        description: 非常可能，代码中已有信号、或同类历史事故记录
+      medium:
+        weight: 2
+        description: 有可能，存在间接迹象或有条件触发
+      low:
+        weight: 1
+        description: 不大可能，但不可排除
+
+  reversibility:
+    description: 一旦因错误猜测已合并上线，修复的代价
+    levels:
+      easy:
+        multiplier: 1
+        description: 热补丁或配置变更即可解决，无需 schema 迁移
+      hard:
+        multiplier: 1.5
+        description: 需要新版本发布、数据修复脚本或跨团队协调
+      irreversible:
+        multiplier: 2
+        description: 数据已写死/已对外 API 公开/涉及法务合规变更无法回退
+
+scoring_examples:
+  - statement: "支付回调接口未验证签名"
+    impact: critical
+    likelihood: high
+    reversibility: hard
+    score: 4 × 3 × 1.5 = 18  # → 🔴 卡单
+  - statement: "错误提示文案未本地化"
+    impact: low
+    likelihood: medium
+    reversibility: easy
+    score: 1 × 2 × 1 = 2    # → 🟢 低优先级
+## 风险打分规则 (Risk Scoring Rubric)
+# 三个维度分别独立打分，最终综合分 score 用于排序和颜色标注
+#
+# score = impact_weight × likelihood_weight × reversibility_multiplier
+#
+# 颜色阈值：
+#   score >= 8  → 🔴 critical（卡单，必须在进入 plan 阶段前回答）
+#   score >= 5  → 🟠 high    （强烈建议 plan 前解决）
+#   score >= 3  → 🟡 medium  （允许在实现阶段补充，但需记录）
+#   score < 3   → 🟢 low     （低优先级，可在 tech debt backlog 中跟进）
+
+dimensions:
+  impact:
+    description: 若该未知项的猜测方向错误，对系统或用户的最坏影响
+    levels:
+      critical:
+        weight: 4
+        description: 数据损坏、严重安全漏洞、全量用户不可用、不可恢复
+      high:
+        weight: 3
+        description: 核心功能故障、大范围降级、显著数据丢失
+      medium:
+        weight: 2
+        description: 局部功能异常、用户体验明显受损、边缘数据错误
+      low:
+        weight: 1
+        description: 轻微 UI 瑕疵、日志噪音、可快速修复的偏差
+
+  likelihood:
+    description: 在当前代码库或需求上下文下，该未知项实际爆发的概率
+    levels:
+      high:
+        weight: 3
+        description: 非常可能，代码中已有信号、或同类历史事故记录
+      medium:
+        weight: 2
+        description: 有可能，存在间接迹象或有条件触发
+      low:
+        weight: 1
+        description: 不大可能，但不可排除
+
+  reversibility:
+    description: 一旦因错误猜测已合并上线，修复的代价
+    levels:
+      easy:
+        multiplier: 1
+        description: 热补丁或配置变更即可解决，无需 schema 迁移
+      hard:
+        multiplier: 1.5
+        description: 需要新版本发布、数据修复脚本或跨团队协调
+      irreversible:
+        multiplier: 2
+        description: 数据已写死/已对外 API 公开/涉及法务合规变更无法回退
+
+scoring_examples:
+  - statement: "支付回调接口未验证签名"
+    impact: critical
+    likelihood: high
+    reversibility: hard
+    score: 4 × 3 × 1.5 = 18  # → 🔴 卡单
+  - statement: "错误提示文案未本地化"
+    impact: low
+    likelihood: medium
+    reversibility: easy
+    score: 1 × 2 × 1 = 2    # → 🟢 低优先级
