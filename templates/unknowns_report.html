@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>已知的未知 · 盲点扫描报告</title>
+<style>
+:root{
+  --red:#ef4444;--orange:#f97316;--yellow:#eab308;--green:#22c55e;
+  --red-bg:#fef2f2;--orange-bg:#fff7ed;--yellow-bg:#fefce8;--green-bg:#f0fdf4;
+  --border:#e5e7eb;--text:#111827;--muted:#6b7280;--bg:#f9fafb;
+  --card:#ffffff;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── TOP BAR ── */
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.logo{font-weight:700;font-size:15px;letter-spacing:-.3px}
+.logo span{color:#6366f1}
+.progress-ring-wrap{display:flex;align-items:center;gap:8px;margin-left:auto}
+.progress-ring{transform:rotate(-90deg)}
+.progress-ring circle{fill:none;stroke-width:3}
+.ring-bg{stroke:#e5e7eb}
+.ring-fill{stroke:#6366f1;stroke-linecap:round;transition:stroke-dashoffset .4s ease}
+.progress-label{font-size:13px;color:var(--muted)}
+.progress-label strong{color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text);transition:.15s}
+.btn:hover{background:#f3f4f6}
+.btn-primary{background:#6366f1;color:#fff;border-color:#6366f1}
+.btn-primary:hover{background:#4f46e5}
+
+/* ── FILTERS ── */
+.filters{padding:14px 24px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;border-bottom:1px solid var(--border)}
+.filter-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:4px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:.15s;user-select:none}
+.chip:hover{border-color:#6366f1;color:#6366f1}
+.chip.active{background:#6366f1;color:#fff;border-color:#6366f1}
+.chip-red.active{background:var(--red);border-color:var(--red)}
+.chip-orange.active{background:var(--orange);border-color:var(--orange)}
+.chip-yellow.active{background:var(--yellow);border-color:var(--yellow)}
+.chip-green.active{background:var(--green);border-color:var(--green)}
+.sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+
+/* ── GRID ── */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:24px;max-width:1400px;margin:0 auto}
+.quadrant{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.q-header{padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.q-icon{font-size:18px}
+.q-title{font-weight:700;font-size:14px}
+.q-count{margin-left:auto;font-size:12px;font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(0,0,0,.06)}
+.q-kk .q-header{background:#f0fdf4;border-bottom-color:#bbf7d0}
+.q-ku .q-header{background:#fefce8;border-bottom-color:#fef08a}
+.q-uk .q-header{background:#faf5ff;border-bottom-color:#e9d5ff}
+.q-uu .q-header{background:#fef2f2;border-bottom-color:#fecaca}
+.q-body{padding:12px}
+
+/* ── CARDS ── */
+.card{border:1.5px solid var(--border);border-radius:8px;margin-bottom:10px;background:#fff;transition:.15s;position:relative}
+.card:last-child{margin-bottom:0}
+.card.focused{border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,.15)}
+.card-head{padding:12px 14px;cursor:pointer;display:flex;align-items:flex-start;gap:10px}
+.card-head:hover{background:#fafafa;border-radius:8px 8px 0 0}
+.card-left{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.card-id{font-size:11px;font-weight:700;color:var(--muted);font-family:monospace}
+.card-statement{font-size:13px;font-weight:500;line-height:1.5;color:var(--text)}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:#f3f4f6;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px;white-space:nowrap;flex-shrink:0}
+.badge-critical{background:var(--red-bg);color:var(--red);border:1px solid #fca5a5}
+.badge-high{background:var(--orange-bg);color:var(--orange);border:1px solid #fed7aa}
+.badge-medium{background:var(--yellow-bg);color:#a16207;border:1px solid #fde68a}
+.badge-low{background:var(--green-bg);color:#15803d;border:1px solid #bbf7d0}
+.badge-answered{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+
+/* ── EXPAND BODY ── */
+.card-body{display:none;padding:14px;border-top:1px solid var(--border);background:#fafafa;border-radius:0 0 8px 8px}
+.card.open .card-body{display:block}
+.card.open .card-head{border-radius:8px 8px 0 0;background:#fafafa}
+.evidence-block{margin-bottom:12px}
+.evidence-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.evidence-sources{list-style:none;display:flex;flex-direction:column;gap:4px}
+.evidence-sources li{font-size:12px;font-family:monospace;background:#f3f4f6;padding:3px 8px;border-radius:4px;color:#1d4ed8;cursor:pointer}
+.evidence-sources li:hover{text-decoration:underline}
+.evidence-reasoning{font-size:12px;color:var(--muted);line-height:1.6}
+.risk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.risk-cell{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;text-align:center}
+.risk-cell-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:2px}
+.risk-cell-val{font-size:13px;font-weight:700;color:var(--text)}
+.score-chip{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-size:14px;font-weight:800}
+.answer-area label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:6px}
+.answer-area textarea{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical;min-height:90px;outline:none;transition:.15s;background:#fff;color:var(--text)}
+.answer-area textarea:focus{border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,.12)}
+.card-actions{display:flex;align-items:center;gap:8px;margin-top:10px}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+.saved-flash{font-size:11px;color:#15803d;font-weight:600;opacity:0;transition:opacity .3s;margin-left:4px}
+.saved-flash.show{opacity:1}
+.skip-btns{display:flex;gap:6px;margin-left:auto}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:32px 16px;color:var(--muted)}
+.empty-state .emoji{font-size:28px;margin-bottom:8px}
+
+/* ── KEYBOARD HINT ── */
+.kb-hint{padding:10px 24px;font-size:11px;color:var(--muted);background:#fff;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px}
+kbd{background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:monospace}
+
+/* ── PRINT ── */
+@media print{
+  .topbar .btn,.filters,.kb-hint,.card-actions,.answer-area textarea{display:none!important}
+  .card-body{display:block!important}
+  .grid{display:block;padding:0}
+  .quadrant{margin-bottom:20px;break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+  body{background:#fff}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">known-<span>unknown</span> · 盲点扫描报告</div>
+  <div id="slug-display" style="font-size:12px;color:var(--muted);font-family:monospace"></div>
+  <div class="progress-ring-wrap">
+    <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+      <circle class="ring-bg" cx="18" cy="18" r="15" stroke-dasharray="94.25" stroke-dashoffset="0"/>
+      <circle class="ring-fill" cx="18" cy="18" r="15" id="ringFill" stroke-dasharray="94.25" stroke-dashoffset="94.25"/>
+    </svg>
+    <div class="progress-label"><strong id="progressText">0 / 0</strong> 已作答</div>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="exportJSON()">📤 导出 spec.json</button>
+  <button class="btn btn-sm" onclick="importJSON()">📥 导入</button>
+  <button class="btn btn-sm" onclick="window.print()">🖨 打印</button>
+  <button class="btn btn-sm" style="color:var(--red)" onclick="clearAll()">🗑 清空答案</button>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <span class="filter-label">风险</span>
+  <span class="chip chip-red" data-filter="risk" data-val="critical" onclick="toggleFilter(this)">🔴 Critical</span>
+  <span class="chip chip-orange" data-filter="risk" data-val="high" onclick="toggleFilter(this)">🟠 High</span>
+  <span class="chip chip-yellow" data-filter="risk" data-val="medium" onclick="toggleFilter(this)">🟡 Medium</span>
+  <span class="chip chip-green" data-filter="risk" data-val="low" onclick="toggleFilter(this)">🟢 Low</span>
+  <div class="sep"></div>
+  <span class="filter-label">状态</span>
+  <span class="chip" data-filter="status" data-val="open" onclick="toggleFilter(this)">只看未答</span>
+  <span class="chip" data-filter="status" data-val="answered" onclick="toggleFilter(this)">只看已答</span>
+  <div class="sep"></div>
+  <span class="filter-label">维度</span>
+  <span class="chip" id="dimFilterChip" onclick="cycleDimFilter()">所有维度</span>
+</div>
+
+<!-- QUADRANT GRID -->
+<div class="grid">
+  <div class="quadrant q-uu">
+    <div class="q-header">
+      <span class="q-icon">🔴</span>
+      <div>
+        <div class="q-title">未知的未知 (Unknown Unknowns)</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">完全没想过的盲点 — Blind Spot Pass 发现</div>
+      </div>
+      <span class="q-count" id="cnt-uu">0</span>
+    </div>
+    <div class="q-body" id="q-unknown_unknown"></div>
+  </div>
+  <div class="quadrant q-ku">
+    <div class="q-header">
+      <span class="q-icon">🟡</span>
+      <div>
+        <div class="q-title">已知的未知 (Known Unknowns)</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">你知道自己还没搞清楚的问题</div>
+      </div>
+      <span class="q-count" id="cnt-ku">0</span>
+    </div>
+    <div class="q-body" id="q-known_unknown"></div>
+  </div>
+  <div class="quadrant q-uk">
+    <div class="q-header">
+      <span class="q-icon">🟣</span>
+      <div>
+        <div class="q-title">未知的已知 (Unknown Knowns)</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">代码库里的隐性规范 — Repo Scan 发现</div>
+      </div>
+      <span class="q-count" id="cnt-uk">0</span>
+    </div>
+    <div class="q-body" id="q-unknown_known"></div>
+  </div>
+  <div class="quadrant q-kk">
+    <div class="q-header">
+      <span class="q-icon">🟢</span>
+      <div>
+        <div class="q-title">已知的已知 (Known Knowns)</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">明确写在需求里的内容</div>
+      </div>
+      <span class="q-count" id="cnt-kk">0</span>
+    </div>
+    <div class="q-body" id="q-known_known"></div>
+  </div>
+</div>
+
+<!-- KEYBOARD HINTS -->
+<div class="kb-hint">
+  <span><kbd>j</kbd> / <kbd>k</kbd> 上下切换</span>
+  <span><kbd>e</kbd> 展开 / 收起</span>
+  <span><kbd>Enter</kbd> 跳至答题框</span>
+  <span><kbd>Esc</kbd> 折叠当前卡片</span>
+  <span><kbd>⌘S</kbd> / <kbd>Ctrl+S</kbd> 导出 JSON</span>
+</div>
+
+<input type="file" id="importInput" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const SLUG = window.__SLUG__ || 'report';
+const STORAGE_KEY = 'known-unknown:' + SLUG;
+
+const DIM_NAMES = {
+  D01_data_model:'数据模型',D02_boundaries:'模块边界',D03_error_handling:'错误处理',
+  D04_concurrency:'并发幂等',D05_performance:'性能容量',D06_security_privacy:'安全隐私',
+  D07_observability:'可观测性',D08_testing:'测试策略',D09_dependencies:'依赖许可',
+  D10_ops_deploy:'部署发布',D11_conventions:'隐性规范',D12_historical:'历史决策'
+};
+
+// Items injected by generator; fallback to demo data
+let rawItems = window.__ITEMS__ || [
+  {id:'U-001',quadrant:'unknown_unknown',dimension:'D06_security_privacy',
+   statement:'IDEAL 等本地支付方式强制 3D Secure 验证，会把原同步支付状态机变为异步流程，导致支付状态永久卡在 pending。',
+   evidence:{sources:['src/services/stripe.js:42','src/models/payment.js:88'],reasoning:'现有 Stripe 适配器均采用直扣模式，未处理 PaymentIntent 的 requires_action 状态回调。'},
+   risk:{impact:'critical',likelihood:'high',reversibility:'hard',score:18},status:'open',answer:'',answered_at:''},
+  {id:'U-002',quadrant:'unknown_unknown',dimension:'D01_data_model',
+   statement:'多币种支付时汇率波动会导致对账系统按固定 USD 汇率核算，产生无法自动核销的系统性误差。',
+   evidence:{sources:['db/schema.sql:12','src/services/billing.js:5'],reasoning:'orders 表仅有 amount_usd 字段，对账服务读取此字段并以 1:1 换算，多币种时误差会累积。'},
+   risk:{impact:'high',likelihood:'medium',reversibility:'hard',score:9},status:'open',answer:'',answered_at:''},
+  {id:'U-003',quadrant:'unknown_known',dimension:'D11_conventions',
+   statement:'所有支付适配器均继承 BasePaymentAdapter 并抛出 PaymentException；新适配器必须遵守此约定。',
+   evidence:{sources:['src/adapters/stripe_adapter.js:1','src/adapters/paypal_adapter.js:1'],reasoning:'两个既有适配器均 extend BasePaymentAdapter，且异常对象包含 rawProviderResponse 字段，全局拦截器依赖此结构。'},
+   risk:{impact:'medium',likelihood:'high',reversibility:'easy',score:6},status:'open',answer:'',answered_at:''},
+  {id:'U-004',quadrant:'known_unknown',dimension:'D02_boundaries',
+   statement:'需要支持的具体币种列表尚未确认，配置化路由的存储方案（硬编码 / 配置中心 / DB）未定。',
+   evidence:{sources:[],reasoning:'需求文档中仅提及「多币种」，未列举具体 ISO 4217 代码和路由优先级规则。'},
+   risk:{impact:'medium',likelihood:'high',reversibility:'easy',score:6},status:'open',answer:'',answered_at:''},
+  {id:'U-005',quadrant:'known_known',dimension:'D06_security_privacy',
+   statement:'PayPal Webhook 必须通过 IP 白名单验证与 HMAC-SHA256 签名前置校验，否则拒绝处理。',
+   evidence:{sources:['src/webhooks/paypal.js:8'],reasoning:'现有代码已实现，属于已确认的安全约束。'},
+   risk:{impact:'critical',likelihood:'low',reversibility:'irreversible',score:8},status:'answered',answer:'已确认，此约束继续保留，新实现需保持兼容。',answered_at:'2026-07-09T10:00:00Z'}
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+if (!state || !state.items) {
+  state = { slug: SLUG, items: rawItems.map(it => ({...it})) };
+  persist();
+} else {
+  // Merge any new items from rawItems not yet in state
+  const existingIds = new Set(state.items.map(i => i.id));
+  rawItems.forEach(it => { if (!existingIds.has(it.id)) state.items.push({...it}); });
+}
+
+let currentIdx = -1;
+let activeFilters = { risk: new Set(), status: null };
+let dimFilter = null;
+const ALL_DIMS = Object.keys(DIM_NAMES);
+let dimFilterIdx = -1;
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function flashSaved(id) {
+  const el = document.getElementById('flash-' + id);
+  if (el) { el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 1800); }
+}
+
+// ─── RISK HELPERS ─────────────────────────────────────────────────────────────
+function riskLevel(score) {
+  if (score >= 8) return 'critical';
+  if (score >= 5) return 'high';
+  if (score >= 3) return 'medium';
+  return 'low';
+}
+function riskEmoji(score) {
+  if (score >= 8) return '🔴';
+  if (score >= 5) return '🟠';
+  if (score >= 3) return '🟡';
+  return '🟢';
+}
+function riskLabel(score) {
+  if (score >= 8) return 'Critical';
+  if (score >= 5) return 'High';
+  if (score >= 3) return 'Medium';
+  return 'Low';
+}
+
+// ─── FILTER LOGIC ─────────────────────────────────────────────────────────────
+function itemVisible(item) {
+  if (activeFilters.risk.size > 0) {
+    if (!activeFilters.risk.has(riskLevel(item.risk.score))) return false;
+  }
+  if (activeFilters.status === 'open' && item.status !== 'open') return false;
+  if (activeFilters.status === 'answered' && item.status !== 'answered') return false;
+  if (dimFilter && item.dimension !== dimFilter) return false;
+  return true;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+const QUADRANTS = ['unknown_unknown','known_unknown','unknown_known','known_known'];
+
+function render() {
+  document.getElementById('slug-display').textContent = 'slug: ' + SLUG;
+  QUADRANTS.forEach(q => {
+    const container = document.getElementById('q-' + q);
+    const items = state.items
+      .filter(i => i.quadrant === q)
+      .sort((a, b) => b.risk.score - a.risk.score);
+    const visible = items.filter(itemVisible);
+
+    // Count badge
+    const countEl = document.getElementById('cnt-' + q.replace('unknown_unknown','uu')
+      .replace('known_unknown','ku').replace('unknown_known','uk').replace('known_known','kk'));
+    if (countEl) countEl.textContent = items.length;
+
+    container.innerHTML = '';
+    if (visible.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="emoji">🎉</div><div>没有符合筛选条件的项目</div></div>';
+      return;
+    }
+    visible.forEach(item => container.appendChild(buildCard(item)));
+  });
+  updateProgress();
+  updateFocusHighlight();
+}
+
+function buildCard(item) {
+  const div = document.createElement('div');
+  div.className = 'card' + (item.status === 'answered' ? ' answered' : '');
+  div.id = 'card-' + item.id;
+  div.dataset.id = item.id;
+
+  const rl = riskLevel(item.risk.score);
+  const sourcesHTML = (item.evidence.sources || []).map(s =>
+    `<li onclick="copySource('${s}')" title="点击复制路径">${s}</li>`).join('') || '<li style="color:var(--muted);font-size:11px">暂无证据源</li>';
+
+  const scoreColor = {critical:'var(--red)',high:'var(--orange)',medium:'#a16207',low:'var(--green)'}[rl];
+
+  div.innerHTML = `
+    <div class="card-head" onclick="toggleCard('${item.id}')">
+      <div class="card-left">
+        <span class="card-id">${item.id}</span>
+        <span class="card-statement">${escHtml(item.statement)}</span>
+        <div class="card-tags">
+          <span class="tag">${DIM_NAMES[item.dimension] || item.dimension}</span>
+          ${item.status === 'answered' ? '<span class="tag" style="background:#d1fae5;color:#065f46">已作答</span>' : ''}
+        </div>
+      </div>
+      <span class="badge badge-${rl}">${riskEmoji(item.risk.score)} ${riskLabel(item.risk.score)} ${item.risk.score}</span>
+    </div>
+    <div class="card-body">
+      <div class="risk-grid">
+        <div class="risk-cell">
+          <div class="risk-cell-label">影响 Impact</div>
+          <div class="risk-cell-val">${capitalize(item.risk.impact)}</div>
+        </div>
+        <div class="risk-cell">
+          <div class="risk-cell-label">概率 Likelihood</div>
+          <div class="risk-cell-val">${capitalize(item.risk.likelihood)}</div>
+        </div>
+        <div class="risk-cell">
+          <div class="risk-cell-label">可逆性</div>
+          <div class="risk-cell-val">${capitalize(item.risk.reversibility)}</div>
+        </div>
+      </div>
+      ${item.evidence.reasoning ? `<div class="evidence-block">
+        <div class="evidence-title">💡 推演依据</div>
+        <div class="evidence-reasoning">${escHtml(item.evidence.reasoning)}</div>
+      </div>` : ''}
+      ${(item.evidence.sources || []).length ? `<div class="evidence-block">
+        <div class="evidence-title">📁 证据源</div>
+        <ul class="evidence-sources">${sourcesHTML}</ul>
+      </div>` : ''}
+      <div class="answer-area">
+        <label>✏️ 你的回答 / 决策</label>
+        <textarea id="ta-${item.id}" placeholder="在此填写你的回答或决策依据..."
+          oninput="saveAnswer('${item.id}', this.value)">${escHtml(item.answer || '')}</textarea>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-primary btn-sm" onclick="markAnswered('${item.id}')">✅ 标记已回答</button>
+        <span class="saved-flash" id="flash-${item.id}">✓ 已保存</span>
+        <div class="skip-btns">
+          <button class="btn btn-sm" onclick="deferItem('${item.id}')">⏭ 暂缓</button>
+          <button class="btn btn-sm" onclick="markNA('${item.id}')">🚫 不适用</button>
+        </div>
+      </div>
+    </div>`;
+  return div;
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function capitalize(s) { return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+function copySource(src) { navigator.clipboard?.writeText(src); }
+
+// ─── CARD INTERACTIONS ────────────────────────────────────────────────────────
+function toggleCard(id) {
+  const el = document.getElementById('card-' + id);
+  if (!el) return;
+  el.classList.toggle('open');
+  const allCards = getAllVisibleCardEls();
+  currentIdx = allCards.indexOf(el);
+  updateFocusHighlight();
+}
+
+function saveAnswer(id, val) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  item.answer = val;
+  if (val.trim()) item.status = 'in_progress';
+  persist();
+  flashSaved(id);
+  updateProgress();
+}
+
+function markAnswered(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  const ta = document.getElementById('ta-' + id);
+  if (ta) item.answer = ta.value;
+  item.status = 'answered';
+  item.answered_at = new Date().toISOString();
+  persist();
+  render();
+}
+
+function deferItem(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  item.status = 'deferred';
+  persist();
+  render();
+}
+
+function markNA(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  item.status = 'obsolete';
+  item.answer = '不适用 (N/A)';
+  persist();
+  render();
+}
+
+// ─── PROGRESS ─────────────────────────────────────────────────────────────────
+function updateProgress() {
+  const total = state.items.length;
+  const answered = state.items.filter(i => i.status === 'answered' || i.status === 'obsolete').length;
+  const pct = total ? answered / total : 0;
+  const circ = 94.25;
+  document.getElementById('ringFill').style.strokeDashoffset = circ * (1 - pct);
+  document.getElementById('progressText').textContent = answered + ' / ' + total;
+}
+
+// ─── FOCUS & KEYBOARD ─────────────────────────────────────────────────────────
+function getAllVisibleCardEls() {
+  return Array.from(document.querySelectorAll('.card'));
+}
+function updateFocusHighlight() {
+  getAllVisibleCardEls().forEach((el, i) => {
+    el.classList.toggle('focused', i === currentIdx);
+  });
+}
+function moveFocus(delta) {
+  const cards = getAllVisibleCardEls();
+  if (!cards.length) return;
+  currentIdx = Math.max(0, Math.min(cards.length - 1, currentIdx + delta));
+  cards[currentIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  updateFocusHighlight();
+}
+function currentCardId() {
+  const cards = getAllVisibleCardEls();
+  return currentIdx >= 0 && cards[currentIdx] ? cards[currentIdx].dataset.id : null;
+}
+
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  if (e.key === 'j') { e.preventDefault(); moveFocus(1); }
+  if (e.key === 'k') { e.preventDefault(); moveFocus(-1); }
+  if (e.key === 'e') { const id = currentCardId(); if (id) toggleCard(id); }
+  if (e.key === 'Escape') {
+    const id = currentCardId();
+    if (id) { const el = document.getElementById('card-'+id); el?.classList.remove('open'); }
+  }
+  if (e.key === 'Enter') {
+    const id = currentCardId();
+    if (id) { const ta = document.getElementById('ta-'+id); ta?.focus(); }
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); exportJSON(); }
+});
+
+// ─── FILTERS ──────────────────────────────────────────────────────────────────
+function toggleFilter(chip) {
+  const filter = chip.dataset.filter;
+  const val = chip.dataset.val;
+  if (filter === 'risk') {
+    if (activeFilters.risk.has(val)) { activeFilters.risk.delete(val); chip.classList.remove('active'); }
+    else { activeFilters.risk.add(val); chip.classList.add('active'); }
+  } else if (filter === 'status') {
+    if (activeFilters.status === val) {
+      activeFilters.status = null; chip.classList.remove('active');
+      document.querySelectorAll('[data-filter="status"]').forEach(c => c.classList.remove('active'));
+    } else {
+      document.querySelectorAll('[data-filter="status"]').forEach(c => c.classList.remove('active'));
+      activeFilters.status = val; chip.classList.add('active');
+    }
+  }
+  render();
+}
+
+function cycleDimFilter() {
+  dimFilterIdx = (dimFilterIdx + 1) % (ALL_DIMS.length + 1);
+  if (dimFilterIdx === ALL_DIMS.length) {
+    dimFilter = null;
+    document.getElementById('dimFilterChip').textContent = '所有维度';
+    document.getElementById('dimFilterChip').classList.remove('active');
+  } else {
+    dimFilter = ALL_DIMS[dimFilterIdx];
+    document.getElementById('dimFilterChip').textContent = dimFilter.replace('_',' ') + ' ' + DIM_NAMES[dimFilter];
+    document.getElementById('dimFilterChip').classList.add('active');
+  }
+  render();
+}
+
+// ─── EXPORT / IMPORT ──────────────────────────────────────────────────────────
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'spec_' + SLUG + '.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+function importJSON() { document.getElementById('importInput').click(); }
+function handleImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.items) { state = data; persist(); render(); alert('✅ 导入成功！'); }
+      else alert('❌ 文件格式不符合 spec.schema.json');
+    } catch { alert('❌ 无法解析 JSON 文件'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+function clearAll() {
+  if (!confirm('确定清空所有答案？此操作不可撤销。')) return;
+  state.items.forEach(i => { i.answer = ''; i.status = 'open'; i.answered_at = ''; });
+  persist(); render();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
