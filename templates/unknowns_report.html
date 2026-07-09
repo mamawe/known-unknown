@@ -417,7 +417,6 @@ function saveAnswer(id, val) {
   const item = state.items.find(i => i.id === id);
   if (!item) return;
   item.answer = val;
-  if (val.trim()) item.status = 'in_progress';
   persist();
   flashSaved(id);
   updateProgress();

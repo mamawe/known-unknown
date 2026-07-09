@@ -66,19 +66,3 @@
 
 ## 🚦 下一步动作 (Next Action)
 对产出的所有已知与未知问题，加载 `prompts/04_risk_scoring.md` 进行科学评估与优先级重排。
-
-```markdown
-### 🔴 未知的未知 (Unknown Unknowns) - 黑天鹅风险扫描
-
-#### [U-XXX] 重大盲点风险描述
-* **扫描维度**: {{ DIMENSION_ID }} ({{ DIMENSION_NAME }})
-* **推演论证**:
-  - **潜在灾难路径**: 如果我们按普通流程去写，由于 [这里存在的某某机制/代码]，一旦发生 [某并发/高流量/失败情况]，会导致 [系统崩溃/数据错乱/不可控故障]。
-  - **参考源/技术原理**: 结合 `path/to/related.js` 的行为分析...
-* **风险评估**: Impact: {{ IMPACT }} | Likelihood: {{ LIKELIHOOD }} | Reversibility: {{ REVERSIBILITY }} | Score: {{ SCORE }}
-```
-
----
-
-## 🚦 下一步动作 (Next Action)
-对产出的所有已知与未知问题，加载 `prompts/04_risk_scoring.md` 进行科学评估与优先级重排。
