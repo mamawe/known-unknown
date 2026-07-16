@@ -1,4 +1,4 @@
-# Skill: known-unknown · v2.0
+# Skill: Known Unknowns-code · v2.0
 ## 已知的未知 — 动手前的系统化盲点扫描技能
 
 ---
@@ -65,14 +65,14 @@
 ⚠️ 在 confirm-quiz 的 verify 阶段通过前，禁止合并任何相关代码。
 ```
 
-**约定**：confirm-quiz 读取 `spec_<slug>.json` 时，如发现 `status !== "answered"` 的 critical 项，必须拒绝进入 plan 阶段并回抛给 known-unknown。
+**约定**：confirm-quiz 读取 `spec_<slug>.json` 时，如发现 `status !== "answered"` 的 critical 项，必须拒绝进入 plan 阶段并回抛给 Known Unknowns-code。
 
 ---
 
 ## 📁 文件结构 (File Structure)
 
 ```
-known-unknown/
+Known-Unknowns-code/
 ├── SKILL.md                          # 本文件：触发语义、工作流、I/O 契约
 ├── prompts/
 │   ├── 01_intake.md                  # 需求接收与边界锁定
@@ -107,12 +107,12 @@ known-unknown/
 | 兼容的 confirm-quiz 版本 | `≥ 1.0.0` |
 | 作者 | mamawe |
 ---
-name: known-unknown
+name: Known Unknowns-code
 description: 当用户提出新的开发需求、项目启动、需求描述模糊，或主动提及"未知项"、"盲点扫描"、"对齐需求"时触发。拆解用户需求，生成四象限未知项清单（已知的已知/已知的未知/未知的已知/未知的未知），引导用户回答关键问题，输出需求规格。
 version: 1.0.0
 ---
 
-# Skill: 已知的未知
+# Skill: 已知的未知（Known Unknowns-code）
 
 ## 触发语义
 当用户提出新的开发需求、项目启动、需求描述模糊，或主动提及"未知项"、"盲点扫描"、"对齐需求"时触发。
